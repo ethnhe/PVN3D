@@ -24,7 +24,7 @@ This is the source code for PVN3D: A Deep Point-wise 3D Keypoints Voting Network
 
 ## Training and evaluating
 ### Training on the YCB-Video Dataset
-- Preprocess the testing set to speed up training:
+- Preprocess the validation set to speed up training:
   ```shell
   cd pvn3d
   python3 -m datasets.ycb.preprocess_testset

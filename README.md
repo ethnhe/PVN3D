@@ -65,7 +65,7 @@ This is the source code for ***PVN3D: A Deep Point-wise 3D Keypoints Voting Netw
 ### Evaluating on the YCB-Video Dataset
 - Start evaluating by:
   ```shell
-  tst_mdl=train_log/ycb/checkpoints/pvn3d_from_model_surgery.pth.tar
+  tst_mdl=train_log/ycb/checkpoints/pvn3d_best.pth.tar
   python3 -m train.train_ycb_pvn3d -checkpoint $tst_mdl -eval_net --test
   ```
   You can evaluate different checkpoint by revising the ``tst_mdl`` to the path of your target model.

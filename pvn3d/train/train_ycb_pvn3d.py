@@ -417,6 +417,14 @@ if __name__ == "__main__":
 
     if not args.eval_net:
         train_ds = YCB_Dataset('train')
+
+        #############################################################
+        while not os.path.exists(config.preprocessed_testset_pth):
+            print("wait for preprocess dataset.")
+            import time
+            time.sleep(10)
+        #############################################################
+
         train_loader = torch.utils.data.DataLoader(
             train_ds, batch_size=config.mini_batch_size, shuffle=True,
             num_workers=60, worker_init_fn=worker_init_fn
@@ -430,7 +438,7 @@ if __name__ == "__main__":
         test_ds = YCB_Dataset('test')
         test_loader = torch.utils.data.DataLoader(
             test_ds, batch_size=config.test_mini_batch_size, shuffle=False,
-            num_workers=10
+            num_workers=20
         )
 
     model = PVN3D(

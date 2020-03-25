@@ -33,7 +33,9 @@ def main():
     ):
         bs, _, _, _ = data[0].shape
         for ibs in range(bs):
-            i_data = [item.numpy() for item in data[ibs]]
+            i_data = [item[ibs] for item in data]
+            if len(i_data) < 11:
+                print(len(i_data))
             data_lst.append(i_data)
     pkl.dump(data_lst, open(config.preprocessed_testset_pth, 'wb'))
 

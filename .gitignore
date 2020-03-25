@@ -1,0 +1,7 @@
+****/*.tar
+****/*.pkl
+****__pycache__
+*****.pyc
+****/*.so
+build
+****/knn

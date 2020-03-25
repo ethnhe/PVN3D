@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import os
+import time
 import torch
 import torch.nn as nn
 import torch.nn.parallel
@@ -13,8 +14,11 @@ from common import Config
 from lib.utils.basic_utils import Basic_Utils
 from lib.utils.meanshift_pytorch import MeanShiftTorch
 
+
 config = Config(dataset_name='ycb')
 bs_utils = Basic_Utils(config)
+config_lm = Config(dataset_name="linemod")
+bs_utils_lm = Basic_Utils(config_lm)
 cls_lst = config.ycb_cls_lst
 
 
@@ -138,6 +142,79 @@ def eval_metric(cls_ids, pred_pose_lst, pred_cls_ids, RTs, mask, label):
     return (cls_add_dis, cls_adds_dis)
 
 
+def eval_metric_lm(cls_ids, pred_pose_lst, RTs, mask, label, obj_id):
+    n_cls = config.n_classes
+    cls_add_dis = [list() for i in range(n_cls)]
+    cls_adds_dis = [list() for i in range(n_cls)]
+
+    pred_RT = pred_pose_lst[0]
+    pred_RT = torch.from_numpy(pred_RT.astype(np.float32)).cuda()
+    gt_RT = RTs[0]
+    mesh_pts = bs_utils_lm.get_pointxyz_cuda(obj_id, ds_type="linemod").clone()
+    add = bs_utils_lm.cal_add_cuda(pred_RT, gt_RT, mesh_pts)
+    adds = bs_utils_lm.cal_adds_cuda(pred_RT, gt_RT, mesh_pts)
+    cls_add_dis[obj_id].append(add.item())
+    cls_adds_dis[obj_id].append(adds.item())
+    cls_add_dis[0].append(add.item())
+    cls_adds_dis[0].append(adds.item())
+
+    return (cls_add_dis, cls_adds_dis)
+
+
+def eval_one_frame_pose_lm(
+    item
+):
+    pcld, mask, ctr_of, pred_kp_of, RTs, cls_ids, use_ctr, n_cls, \
+        min_cnt, use_ctr_clus_flter, label, epoch, ibs, obj_id = item
+    n_kps, n_pts, _ = pred_kp_of.size()
+    pred_ctr = pcld - ctr_of[0]
+    pred_kp = pcld.view(1, n_pts, 3).repeat(n_kps, 1, 1) - pred_kp_of
+
+    radius=0.08
+    if use_ctr:
+        cls_kps = torch.zeros(n_cls, n_kps+1, 3).cuda()
+    else:
+        cls_kps = torch.zeros(n_cls, n_kps, 3).cuda()
+
+    pred_pose_lst = []
+    cls_id = 1
+    cls_msk = mask == cls_id
+    if cls_msk.sum() < 1:
+        pred_pose_lst.append(np.identity(4)[:3,:])
+    else:
+        cls_voted_kps = pred_kp[:, cls_msk, :]
+        ms = MeanShiftTorch(bandwidth=radius)
+        ctr, ctr_labels = ms.fit(pred_ctr[cls_msk, :])
+        if ctr_labels.sum() < 1:
+            ctr_labels[0] = 1
+        if use_ctr:
+            cls_kps[cls_id, n_kps, :] = ctr
+
+        if use_ctr_clus_flter:
+            in_pred_kp = cls_voted_kps[:, ctr_labels, :]
+        else:
+            in_pred_kp = cls_voted_kps
+
+        for ikp, kps3d in enumerate(in_pred_kp):
+            cls_kps[cls_id, ikp, :], _ = ms.fit(kps3d)
+
+        mesh_kps = bs_utils_lm.get_kps(obj_id, ds_type="linemod")
+        if use_ctr:
+            mesh_ctr = bs_utils_lm.get_ctr(obj_id, ds_type="linemod").reshape(1,3)
+            mesh_kps = np.concatenate((mesh_kps, mesh_ctr), axis=0)
+        mesh_kps = torch.from_numpy(mesh_kps.astype(np.float32)).cuda()
+        pred_RT = bs_utils_lm.best_fit_transform(
+            mesh_kps.contiguous().cpu().numpy(),
+            cls_kps[cls_id].squeeze().contiguous().cpu().numpy()
+        )
+        pred_pose_lst.append(pred_RT)
+
+    cls_add_dis, cls_adds_dis = eval_metric_lm(
+        cls_ids, pred_pose_lst, RTs, mask, label, obj_id
+    )
+    return (cls_add_dis, cls_adds_dis)
+
+
 class TorchEval():
 
     def __init__(self):
@@ -197,11 +274,58 @@ class TorchEval():
         )
         pkl.dump(sv_info, open(sv_pth, 'wb'))
 
+    def cal_lm_add(self, obj_id, test_occ=False):
+        add_auc_lst = []
+        adds_auc_lst = []
+        add_s_auc_lst = []
+        cls_id = obj_id
+        if (obj_id) in config_lm.lm_sym_cls_ids:
+            self.cls_add_s_dis[cls_id] = self.cls_adds_dis[cls_id]
+        else:
+            self.cls_add_s_dis[cls_id] = self.cls_add_dis[cls_id]
+        self.cls_add_s_dis[0] += self.cls_add_s_dis[cls_id]
+        add_auc = bs_utils_lm.cal_auc(self.cls_add_dis[cls_id])
+        adds_auc = bs_utils_lm.cal_auc(self.cls_adds_dis[cls_id])
+        add_s_auc = bs_utils_lm.cal_auc(self.cls_add_s_dis[cls_id])
+        add_auc_lst.append(add_auc)
+        adds_auc_lst.append(adds_auc)
+        add_s_auc_lst.append(add_s_auc)
+        d = config_lm.lm_r_lst[obj_id]['diameter'] / 1000.0 * 0.1
+        print("obj_id: ", obj_id, "0.1 diameter: ", d)
+        add = np.mean(np.array(self.cls_add_dis[cls_id]) < d) * 100
+        adds = np.mean(np.array(self.cls_adds_dis[cls_id]) < d) * 100
+
+        cls_type = config_lm.lm_id2obj_dict[obj_id]
+        print(obj_id, cls_type)
+        print("***************add auc:\t", add_auc)
+        print("***************adds auc:\t", adds_auc)
+        print("***************add(-s) auc:\t", add_s_auc)
+        print("***************add < 0.1 diameter:\t", add)
+        print("***************adds < 0.1 diameter:\t", adds)
+
+        sv_info = dict(
+            add_dis_lst = self.cls_add_dis,
+            adds_dis_lst = self.cls_adds_dis,
+            add_auc_lst = add_auc_lst,
+            adds_auc_lst = adds_auc_lst,
+            add_s_auc_lst = add_s_auc_lst,
+            add = add,
+            adds = adds,
+        )
+        occ = "occlusion" if test_occ else ""
+        sv_pth = os.path.join(
+            config_lm.log_eval_dir,
+            'pvn3d_eval_cuda_{}_{}_{}_{}.pkl'.format(
+                cls_type, occ, add, adds
+            )
+        )
+        pkl.dump(sv_info, open(sv_pth, 'wb'))
+
     def eval_pose_parallel(
         self, pclds, rgbs, masks, pred_ctr_ofs, gt_ctr_ofs, labels, cnt,
         cls_ids, RTs, pred_kp_ofs, min_cnt=20, merge_clus=False, bbox=False, ds='YCB',
         cls_type=None, use_p2d = False, vote_type=VotingType.Farthest,
-        use_ctr_clus_flter=True, use_ctr=True
+        use_ctr_clus_flter=True, use_ctr=True, ds_type="ycb", obj_id=0
     ):
         bs, n_kps, n_pts, c = pred_kp_ofs.size()
         masks = masks.long()
@@ -212,15 +336,27 @@ class TorchEval():
         epoch_lst = [cnt*bs for i in range(bs)]
         bs_lst = [i for i in range(bs)]
         use_ctr_clus_flter_lst = [use_ctr_clus_flter for i in range(bs)]
-        data_gen = zip(
-            pclds, masks, pred_ctr_ofs, pred_kp_ofs, RTs,
-            cls_ids, use_ctr_lst, n_cls_lst, min_cnt_lst, use_ctr_clus_flter_lst,
-            labels, epoch_lst, bs_lst
-        )
+        obj_id_lst = [obj_id for i in range(bs)]
+        if ds_type == "ycb":
+            data_gen = zip(
+                pclds, masks, pred_ctr_ofs, pred_kp_ofs, RTs,
+                cls_ids, use_ctr_lst, n_cls_lst, min_cnt_lst, use_ctr_clus_flter_lst,
+                labels, epoch_lst, bs_lst
+            )
+        else:
+            data_gen = zip(
+                pclds, masks, pred_ctr_ofs, pred_kp_ofs, RTs,
+                cls_ids, use_ctr_lst, n_cls_lst, min_cnt_lst, use_ctr_clus_flter_lst,
+                labels, epoch_lst, bs_lst, obj_id_lst
+            )
         with concurrent.futures.ThreadPoolExecutor(
-            max_workers=bs
+            max_workers= bs
         ) as executor:
-            for res in executor.map(eval_one_frame_pose, data_gen):
+            if ds_type == "ycb":
+                eval_func = eval_one_frame_pose
+            else:
+                eval_func = eval_one_frame_pose_lm
+            for res in executor.map(eval_func, data_gen):
                 cls_add_dis_lst, cls_adds_dis_lst = res
                 self.cls_add_dis = self.merge_lst(
                     self.cls_add_dis, cls_add_dis_lst
@@ -233,4 +369,5 @@ class TorchEval():
         for i in range(len(targ)):
             targ[i] += src[i]
         return targ
+
 # vim: ts=4 sw=4 sts=4 expandtab

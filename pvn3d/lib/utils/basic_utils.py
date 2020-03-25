@@ -80,18 +80,95 @@ def best_fit_transform(A, B):
     return  T
 
 
+class PoseTransformer(object):
+    rotation_transform = np.array([[1., 0., 0.],
+                                   [0., -1., 0.],
+                                   [0., 0., -1.]])
+    translation_transforms = {}
+    class_type_to_number = {
+        'ape': '001',
+        'can': '004',
+        'cat': '005',
+        'driller': '006',
+        'duck': '007',
+        'eggbox': '008',
+        'glue': '009',
+        'holepuncher': '010'
+    }
+    blender_models={}
+
+    def __init__(self, class_type):
+        self.class_type = class_type
+        lm_pth = 'datasets/linemod/LINEMOD'
+        lm_occ_pth = 'datasets/linemod/OCCLUSION_LINEMOD'
+        self.blender_model_path = os.path.join(lm_pth,'{}/{}.ply'.format(class_type, class_type))
+        self.xyz_pattern = os.path.join(lm_occ_pth,'models/{}/{}.xyz')
+
+    @staticmethod
+    def load_ply_model(model_path):
+        ply = PlyData.read(model_path)
+        data = ply.elements[0].data
+        x = data['x']
+        y = data['y']
+        z = data['z']
+        return np.stack([x, y, z], axis=-1)
+
+    def get_blender_model(self):
+        if self.class_type in self.blender_models:
+            return self.blender_models[self.class_type]
+
+        blender_model = self.load_ply_model(self.blender_model_path.format(self.class_type, self.class_type))
+        self.blender_models[self.class_type] = blender_model
+
+        return blender_model
+
+    def get_translation_transform(self):
+        if self.class_type in self.translation_transforms:
+            return self.translation_transforms[self.class_type]
+
+        model = self.get_blender_model()
+        xyz = np.loadtxt(self.xyz_pattern.format(
+            self.class_type.title(), self.class_type_to_number[self.class_type]))
+        rotation = np.array([[0., 0., 1.],
+                             [1., 0., 0.],
+                             [0., 1., 0.]])
+        xyz = np.dot(xyz, rotation.T)
+        translation_transform = np.mean(xyz, axis=0) - np.mean(model, axis=0)
+        self.translation_transforms[self.class_type] = translation_transform
+
+        return translation_transform
+
+    def occlusion_pose_to_blender_pose(self, pose):
+        rot, tra = pose[:, :3], pose[:, 3]
+        rotation = np.array([[0., 1., 0.],
+                             [0., 0., 1.],
+                             [1., 0., 0.]])
+        rot = np.dot(rot, rotation)
+
+        tra[1:] *= -1
+        translation_transform = np.dot(rot, self.get_translation_transform())
+        rot[1:] *= -1
+        translation_transform[1:] *= -1
+        tra += translation_transform
+        pose = np.concatenate([rot, np.reshape(tra, newshape=[3, 1])], axis=-1)
+
+        return pose
+
+
 class Basic_Utils():
 
     def __init__(self, config):
         self.xmap = np.array([[j for i in range(640)] for j in range(480)])
         self.ymap = np.array([[i for i in range(640)] for j in range(480)])
         self.config = config
-        self.ycb_cls_lst = config.ycb_cls_lst
+        if config.dataset_name == "ycb":
+            self.ycb_cls_lst = config.ycb_cls_lst
         self.ycb_cls_ptsxyz_dict = {}
         self.ycb_cls_ptsxyz_cuda_dict = {}
         self.ycb_cls_kps_dict = {}
         self.ycb_cls_ctr_dict = {}
         self.lm_cls_ptsxyz_dict = {}
+        self.lm_cls_ptsxyz_cuda_dict = {}
         self.lm_cls_kps_dict = {}
         self.lm_cls_ctr_dict = {}
 
@@ -307,7 +384,7 @@ class Basic_Utils():
         msk_dp = dpt > 1e-6
         choose = msk_dp.flatten().nonzero()[0].astype(np.uint32)
         if len(choose) < 1:
-            return None
+            return None, None
 
         dpt_mskd = dpt.flatten()[choose][:, np.newaxis].astype(np.float32)
         xmap_mskd = self.xmap.flatten()[choose][:, np.newaxis].astype(np.float32)
@@ -404,29 +481,62 @@ class Basic_Utils():
                 cls = self.lm_cls_lst[cls - 1]
         return cls
 
+    def ply_vtx(self, pth):
+        f = open(pth)
+        assert f.readline().strip() == "ply"
+        f.readline()
+        f.readline()
+        N = int(f.readline().split()[-1])
+        while f.readline().strip() != "end_header":
+            continue
+        pts = []
+        for _ in range(N):
+            pts.append(np.float32(f.readline().split()[:3]))
+        return np.array(pts)
+
     def get_pointxyz(
         self, cls, ds_type='ycb'
     ):
-        cls = self.get_cls_name(cls, ds_type)
-        if cls in self.ycb_cls_ptsxyz_dict.keys():
-            return self.ycb_cls_ptsxyz_dict[cls]
-        ptxyz_ptn = os.path.join(
-            self.config.ycb_root, 'models',
-            '{}/points.xyz'.format(cls),
-        )
-        pointxyz = np.loadtxt(ptxyz_ptn.format(cls), dtype=np.float32)
-        self.ycb_cls_ptsxyz_dict[cls] = pointxyz
-        return pointxyz
+        if ds_type == "ycb":
+            cls = self.get_cls_name(cls, ds_type)
+            if cls in self.ycb_cls_ptsxyz_dict.keys():
+                return self.ycb_cls_ptsxyz_dict[cls]
+            ptxyz_ptn = os.path.join(
+                self.config.ycb_root, 'models',
+                '{}/points.xyz'.format(cls),
+            )
+            pointxyz = np.loadtxt(ptxyz_ptn.format(cls), dtype=np.float32)
+            self.ycb_cls_ptsxyz_dict[cls] = pointxyz
+            return pointxyz
+        else:
+            ptxyz_pth = os.path.join(
+                'datasets/linemod/Linemod_preprocessed/models',
+                'obj_%02d.ply' % cls
+            )
+            pointxyz = self.ply_vtx(ptxyz_pth) / 1000.0
+            dellist = [j for j in range(0, len(pointxyz))]
+            dellist = random.sample(dellist, len(pointxyz) - 2000)
+            pointxyz = np.delete(pointxyz, dellist, axis=0)
+            self.lm_cls_ptsxyz_dict[cls] = pointxyz
+            return pointxyz
 
     def get_pointxyz_cuda(
         self, cls, ds_type='ycb'
     ):
-        if cls in self.ycb_cls_ptsxyz_cuda_dict.keys():
-            return self.ycb_cls_ptsxyz_cuda_dict[cls].clone()
-        ptsxyz = self.get_pointxyz(cls, ds_type)
-        ptsxyz_cu = torch.from_numpy(ptsxyz.astype(np.float32)).cuda()
-        self.ycb_cls_ptsxyz_cuda_dict[cls] = ptsxyz_cu
-        return ptsxyz_cu.clone()
+        if ds_type == "ycb":
+            if cls in self.ycb_cls_ptsxyz_cuda_dict.keys():
+                return self.ycb_cls_ptsxyz_cuda_dict[cls].clone()
+            ptsxyz = self.get_pointxyz(cls, ds_type)
+            ptsxyz_cu = torch.from_numpy(ptsxyz.astype(np.float32)).cuda()
+            self.ycb_cls_ptsxyz_cuda_dict[cls] = ptsxyz_cu
+            return ptsxyz_cu.clone()
+        else:
+            if cls in self.lm_cls_ptsxyz_cuda_dict.keys():
+                return self.lm_cls_ptsxyz_cuda_dict[cls].clone()
+            ptsxyz = self.get_pointxyz(cls, ds_type)
+            ptsxyz_cu = torch.from_numpy(ptsxyz.astype(np.float32)).cuda()
+            self.lm_cls_ptsxyz_cuda_dict[cls] = ptsxyz_cu
+            return ptsxyz_cu.clone()
 
     def get_kps(
         self, cls, kp_type='farthest', ds_type='ycb'
@@ -435,14 +545,23 @@ class Basic_Utils():
             if ds_type == 'ycb':
                 cls = self.ycb_cls_lst[cls - 1]
             else:
-                cls = self.lm_cls_lst[cls - 1]
-        if cls in self.ycb_cls_kps_dict.keys():
-            return self.ycb_cls_kps_dict[cls].copy()
-        kps_pattern = os.path.join(
-            self.config.ycb_kps_dir, '{}/{}.txt'.format(cls, kp_type),
-        )
-        kps = np.loadtxt(kps_pattern.format(cls), dtype=np.float32)
-        self.ycb_cls_kps_dict[cls] = kps
+                cls = self.config.lm_id2obj_dict[cls]
+        if ds_type == "ycb":
+            if cls in self.ycb_cls_kps_dict.keys():
+                return self.ycb_cls_kps_dict[cls].copy()
+            kps_pattern = os.path.join(
+                self.config.ycb_kps_dir, '{}/{}.txt'.format(cls, kp_type)
+            )
+            kps = np.loadtxt(kps_pattern.format(cls), dtype=np.float32)
+            self.ycb_cls_kps_dict[cls] = kps
+        else:
+            if cls in self.lm_cls_kps_dict.keys():
+                return self.lm_cls_kps_dict[cls].copy()
+            kps_pattern = os.path.join(
+                self.config.lm_kps_dir, "{}/{}.txt".format(cls, kp_type)
+            )
+            kps = np.loadtxt(kps_pattern.format(cls), dtype=np.float32)
+            self.lm_cls_kps_dict[cls] = kps
         return kps.copy()
 
     def get_ctr(self, cls, ds_type='ycb'):
@@ -450,15 +569,25 @@ class Basic_Utils():
             if ds_type == 'ycb':
                 cls = self.ycb_cls_lst[cls - 1]
             else:
-                cls = self.lm_cls_lst[cls - 1]
-        if cls in self.ycb_cls_ctr_dict.keys():
-            return self.ycb_cls_ctr_dict[cls].copy()
-        cor_pattern = os.path.join(
-            self.config.ycb_kps_dir, '{}/corners.txt'.format(cls),
-        )
-        cors = np.loadtxt(cor_pattern.format(cls), dtype=np.float32)
-        ctr = cors.mean(0)
-        self.ycb_cls_ctr_dict[cls] = ctr
+                cls = self.config.lm_id2obj_dict[cls]
+        if ds_type == "ycb":
+            if cls in self.ycb_cls_ctr_dict.keys():
+                return self.ycb_cls_ctr_dict[cls].copy()
+            cor_pattern = os.path.join(
+                self.config.ycb_kps_dir, '{}/corners.txt'.format(cls),
+            )
+            cors = np.loadtxt(cor_pattern.format(cls), dtype=np.float32)
+            ctr = cors.mean(0)
+            self.ycb_cls_ctr_dict[cls] = ctr
+        else:
+            if cls in self.lm_cls_ctr_dict.keys():
+                return self.lm_cls_ctr_dict[cls].copy()
+            cor_pattern = os.path.join(
+                self.config.lm_kps_dir, '{}/corners.txt'.format(cls),
+            )
+            cors = np.loadtxt(cor_pattern.format(cls), dtype=np.float32)
+            ctr = cors.mean(0)
+            self.lm_cls_ctr_dict[cls] = ctr
         return ctr.copy()
 
     def cal_auc(self, add_dis, max_dis=0.1):

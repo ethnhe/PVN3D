@@ -1,7 +1,7 @@
 h5py
 numpy
-torch>=1.0
-torchvision
+torch==1.0.1.post2
+torchvision==0.2.0
 yaml
 pprint
 enum34

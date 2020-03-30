@@ -12,10 +12,8 @@ import pickle as pkl
 from lib.utils.basic_utils import Basic_Utils
 import scipy.io as scio
 import scipy.misc
+from cv2 import imshow, waitKey
 
-###############################
-from neupeak.utils.webcv2 import imshow, waitKey
-###############################
 
 config = Config(dataset_name='ycb')
 bs_utils = Basic_Utils(config)

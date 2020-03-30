@@ -13,7 +13,7 @@ from lib.utils.basic_utils import Basic_Utils
 import yaml
 import scipy.io as scio
 import scipy.misc
-from neupeak.utils.webcv2 import imshow, waitKey
+from cv2 import imshow, waitKey
 
 DEBUG = False
 

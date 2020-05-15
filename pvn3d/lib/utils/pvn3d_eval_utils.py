@@ -34,11 +34,9 @@ class VotingType:
     Farthest20=9
 
 
-def eval_one_frame_pose(
-    item
+def cal_frame_poses(
+    pcld, mask, ctr_of, pred_kp_of, use_ctr, n_cls, use_ctr_clus_flter
 ):
-    pcld, mask, ctr_of, pred_kp_of, RTs, cls_ids, use_ctr, n_cls, \
-        min_cnt, use_ctr_clus_flter, label, epoch, ibs = item
     n_kps, n_pts, _ = pred_kp_of.size()
     pred_ctr = pcld - ctr_of[0]
     pred_kp = pcld.view(1, n_pts, 3).repeat(n_kps, 1, 1) - pred_kp_of
@@ -109,10 +107,7 @@ def eval_one_frame_pose(
         )
         pred_pose_lst.append(pred_RT)
 
-    cls_add_dis, cls_adds_dis = eval_metric(
-        cls_ids, pred_pose_lst, pred_cls_ids, RTs, mask, label
-    )
-    return (cls_add_dis, cls_adds_dis)
+    return (pred_cls_ids, pred_pose_lst)
 
 
 def eval_metric(cls_ids, pred_pose_lst, pred_cls_ids, RTs, mask, label):
@@ -142,30 +137,25 @@ def eval_metric(cls_ids, pred_pose_lst, pred_cls_ids, RTs, mask, label):
     return (cls_add_dis, cls_adds_dis)
 
 
-def eval_metric_lm(cls_ids, pred_pose_lst, RTs, mask, label, obj_id):
-    n_cls = config.n_classes
-    cls_add_dis = [list() for i in range(n_cls)]
-    cls_adds_dis = [list() for i in range(n_cls)]
-
-    pred_RT = pred_pose_lst[0]
-    pred_RT = torch.from_numpy(pred_RT.astype(np.float32)).cuda()
-    gt_RT = RTs[0]
-    mesh_pts = bs_utils_lm.get_pointxyz_cuda(obj_id, ds_type="linemod").clone()
-    add = bs_utils_lm.cal_add_cuda(pred_RT, gt_RT, mesh_pts)
-    adds = bs_utils_lm.cal_adds_cuda(pred_RT, gt_RT, mesh_pts)
-    cls_add_dis[obj_id].append(add.item())
-    cls_adds_dis[obj_id].append(adds.item())
-    cls_add_dis[0].append(add.item())
-    cls_adds_dis[0].append(adds.item())
-
-    return (cls_add_dis, cls_adds_dis)
-
-
-def eval_one_frame_pose_lm(
+def eval_one_frame_pose(
     item
 ):
     pcld, mask, ctr_of, pred_kp_of, RTs, cls_ids, use_ctr, n_cls, \
-        min_cnt, use_ctr_clus_flter, label, epoch, ibs, obj_id = item
+        min_cnt, use_ctr_clus_flter, label, epoch, ibs = item
+
+    pred_cls_ids, pred_pose_lst = cal_frame_poses(
+        pcld, mask, ctr_of, pred_kp_of, use_ctr, n_cls, use_ctr_clus_flter
+    )
+
+    cls_add_dis, cls_adds_dis = eval_metric(
+        cls_ids, pred_pose_lst, pred_cls_ids, RTs, mask, label
+    )
+    return (cls_add_dis, cls_adds_dis)
+
+
+def cal_frame_poses_lm(
+    pcld, mask, ctr_of, pred_kp_of, use_ctr, n_cls, use_ctr_clus_flter, obj_id
+):
     n_kps, n_pts, _ = pred_kp_of.size()
     pred_ctr = pcld - ctr_of[0]
     pred_kp = pcld.view(1, n_pts, 3).repeat(n_kps, 1, 1) - pred_kp_of
@@ -174,7 +164,7 @@ def eval_one_frame_pose_lm(
     if use_ctr:
         cls_kps = torch.zeros(n_cls, n_kps+1, 3).cuda()
     else:
-        cls_kps = torch.zeros(n_cls, n_kps, 3).cuda()
+        ls_kps = torch.zeros(n_cls, n_kps, 3).cuda()
 
     pred_pose_lst = []
     cls_id = 1
@@ -208,6 +198,37 @@ def eval_one_frame_pose_lm(
             cls_kps[cls_id].squeeze().contiguous().cpu().numpy()
         )
         pred_pose_lst.append(pred_RT)
+    return pred_pose_lst
+
+
+def eval_metric_lm(cls_ids, pred_pose_lst, RTs, mask, label, obj_id):
+    n_cls = config.n_classes
+    cls_add_dis = [list() for i in range(n_cls)]
+    cls_adds_dis = [list() for i in range(n_cls)]
+
+    pred_RT = pred_pose_lst[0]
+    pred_RT = torch.from_numpy(pred_RT.astype(np.float32)).cuda()
+    gt_RT = RTs[0]
+    mesh_pts = bs_utils_lm.get_pointxyz_cuda(obj_id, ds_type="linemod").clone()
+    add = bs_utils_lm.cal_add_cuda(pred_RT, gt_RT, mesh_pts)
+    adds = bs_utils_lm.cal_adds_cuda(pred_RT, gt_RT, mesh_pts)
+    cls_add_dis[obj_id].append(add.item())
+    cls_adds_dis[obj_id].append(adds.item())
+    cls_add_dis[0].append(add.item())
+    cls_adds_dis[0].append(adds.item())
+
+    return (cls_add_dis, cls_adds_dis)
+
+
+def eval_one_frame_pose_lm(
+    item
+):
+    pcld, mask, ctr_of, pred_kp_of, RTs, cls_ids, use_ctr, n_cls, \
+        min_cnt, use_ctr_clus_flter, label, epoch, ibs, obj_id = item
+    pred_pose_lst = cal_frame_poses_lm(
+        pcld, mask, ctr_of, pred_kp_of, use_ctr, n_cls, use_ctr_clus_flter,
+        obj_id
+    )
 
     cls_add_dis, cls_adds_dis = eval_metric_lm(
         cls_ids, pred_pose_lst, RTs, mask, label, obj_id

@@ -89,7 +89,7 @@ parser.add_argument(
 parser.add_argument(
     "--cls",
     type=str,
-    default="duck",
+    default="ape",
     help="Target object. (ape, benchvise, cam, can, cat, driller," +
     "duck, eggbox, glue, holepuncher, iron, lamp, phone)"
 )

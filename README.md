@@ -1,8 +1,7 @@
 # PVN3D
-This is the source code for ***PVN3D: A Deep Point-wise 3D Keypoints Voting Network for 6DoF Pose Estimation***, **CVPR 2020**. ([PDF](https://arxiv.org/abs/1911.04231), [Video](https://www.bilibili.com/video/av89408773/)).
+This is the source code for ***PVN3D: A Deep Point-wise 3D Keypoints Voting Network for 6DoF Pose Estimation***, **CVPR 2020**. ([PDF](https://arxiv.org/abs/1911.04231), [Video bilibili](https://www.bilibili.com/video/av89408773/), [video youtube](https://www.youtube.com/watch?v=ZKo788cyD-Q&t=1s)).
 
-[![Watch the video](./pictures/video.jpg)](https://www.youtube.com/watch?v=ZKo788cyD-Q&t=1s)
-
+![introgif](pictures/intro.gif)
 
 ## Installation
 - Install CUDA9.0/CUDA10.0
@@ -48,7 +47,7 @@ This is the source code for ***PVN3D: A Deep Point-wise 3D Keypoints Voting Netw
   python3 -m train.train_linemod_pvn3d -checkpoint $tst_mdl -eval_net --test --cls $cls
   ```
   You can evaluate different checkpoint by revising ``tst_mdl`` to the path of your target model.
-- We provide our pre-trained models for each object [here](https://hkustconnect-my.sharepoint.com/personal/yhebk_connect_ust_hk/_layouts/15/onedrive.aspx?id=%2Fpersonal%2Fyhebk%5Fconnect%5Fust%5Fhk%2FDocuments%2FPVN3D%5Fpretrained%5Fmodel%2FLineMOD). Download them and move them to their according folders. For example, move the ``ape_pvn3d_best.pth.tar`` to ``train_log/linemod/checkpoints/ape/``. Then revise ``tst_mdl=train_log/linemod/checkpoints/ape/ape_pvn3d_best.path.tar`` for testing.
+- We provide our pre-trained models for each object at [onedrive link](https://hkustconnect-my.sharepoint.com/:f:/g/personal/yhebk_connect_ust_hk/Ehay5pPtl-BGnvAEclXBRu8BEpZeHuG9x-aN_djAtt5rPA?e=3BvfrV), [baiduyun link](https://pan.baidu.com/s/1MhqPvjROCkR17W1tiXE9SA)(access code(提取码): 8kmp). Download them and move them to their according folders. For example, move the ``ape_pvn3d_best.pth.tar`` to ``train_log/linemod/checkpoints/ape/``. Then revise ``tst_mdl=train_log/linemod/checkpoints/ape/ape_pvn3d_best.path.tar`` for testing.
 
 ### Training on the YCB-Video Dataset
 - Preprocess the validation set to speed up training:
@@ -69,7 +68,7 @@ This is the source code for ***PVN3D: A Deep Point-wise 3D Keypoints Voting Netw
   python3 -m train.train_ycb_pvn3d -checkpoint $tst_mdl -eval_net --test
   ```
   You can evaluate different checkpoint by revising the ``tst_mdl`` to the path of your target model.
-- We provide our pre-trained models [here](https://hkustconnect-my.sharepoint.com/:f:/g/personal/yhebk_connect_ust_hk/ElLgjzbbENZGhf-Sn8e4CMgBzd9zDjcJpCXFmB4n0WVw_w?e=IHMkvh). Download the ycb pre-trained model, move it to ``train_log/ycb/checkpoints/`` and modify ``tst_mdl`` for testing.
+- We provide our pre-trained models at [onedrive link](https://hkustconnect-my.sharepoint.com/:f:/g/personal/yhebk_connect_ust_hk/EmQQXKJdC1FDplKS4FQ6n78B4T7eyvhSEsZ8dZySJUmv4w?e=7BwsS5), [baiduyun link](https://pan.baidu.com/s/1hCzqfB3JhOzF3LATsWFFBg)(access code(提取码): h2i5). Download the ycb pre-trained model, move it to ``train_log/ycb/checkpoints/`` and modify ``tst_mdl`` for testing.
 
 ## Results
 - Evaluation result on the LineMOD dataset:

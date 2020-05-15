@@ -11,7 +11,7 @@ This is the source code for ***PVN3D: A Deep Point-wise 3D Keypoints Voting Netw
   ```
 - Install tkinter through ``sudo apt install python3-tk``
 - Install [python-pcl](https://github.com/strawlab/python-pcl).
-- Install PointNet++:
+- Install PointNet++ (refer from [Pointnet2_PyTorch](https://github.com/erikwijmans/Pointnet2_PyTorch)):
   ```shell
   python3 setup.py build_ext
   ```
@@ -104,10 +104,11 @@ This is the source code for ***PVN3D: A Deep Point-wise 3D Keypoints Voting Netw
 ## Citations
 Please cite [PVN3D](https://arxiv.org/abs/1911.04231) if you use this repository in your publications:
 ```
-@inproceedings{he2020pvn3d,
-  title={PVN3D: A Deep Point-wise 3D Keypoints Voting Network for 6DoF Pose Estimation},
+@Inproceedings{he_2020_CVPR,
   author={He, Yisheng and Sun, Wei and Huang, haibin and Liu, Jianran and Fan, Haoqiang and Sun, Jian}
-  booktitle={CVPR},
+  title={PVN3D: A Deep Point-wise 3D Keypoints Voting Network for 6DoF Pose Estimation},
+  booktitle = {The IEEE Conference on Computer Vision and Pattern Recognition (CVPR)},
+  month = {June},
   year={2020}
 }
 ```

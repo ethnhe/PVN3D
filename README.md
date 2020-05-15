@@ -4,7 +4,7 @@ This is the source code for ***PVN3D: A Deep Point-wise 3D Keypoints Voting Netw
 <div align=center><img width="60%" height="60%" src="pictures/intro.gif"/></div>
 
 ## Installation
-- Install CUDA9.0/CUDA10.0
+- Install CUDA9.0
 - Set up python environment from requirement.txt:
   ```shell
   pip3 install -r requirement.txt 

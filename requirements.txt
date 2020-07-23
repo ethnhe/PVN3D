@@ -1,8 +1,8 @@
 numpy
 Cython
 h5py
-torch==1.5.1
-torchvision==0.6.1
+torch
+torchvision
 pyyaml
 pprint
 enum34

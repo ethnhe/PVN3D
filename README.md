@@ -31,6 +31,15 @@ This is the source code for ***PVN3D: A Deep Point-wise 3D Keypoints Voting Netw
   pip install -r requirements.txt
   ```
 - Install tkinter through ``sudo apt install python3-tk``
+- Install python-pcl. For Ubtuntu 18.04 from source:
+  ```shell
+  # install dependencies
+  sudo apt install libpcl-dev libvtk6-dev
+  # clone fork with fix for Ubuntu 18.04
+  git clone https://github.com/Tuebel/python-pcl
+  cd python-pcl
+  python setup.py install
+  ```
 - Install PointNet++ (refer from [Pointnet2_PyTorch](https://github.com/erikwijmans/Pointnet2_PyTorch)):
   ```shell
   git clone https://github.com/erikwijmans/Pointnet2_PyTorch
@@ -43,7 +52,7 @@ This is the source code for ***PVN3D: A Deep Point-wise 3D Keypoints Voting Netw
 ## Datasets
 - **LineMOD:** Download the preprocessed LineMOD dataset from [here](https://drive.google.com/drive/folders/19ivHpaKm9dOrr12fzC8IDFczWRPFxho7) (refer from [DenseFusion](https://github.com/j96w/DenseFusion)). Unzip it and link the unzipped ``Linemod_preprocessed/`` to ``pvn3d/datasets/linemod/Linemod_preprocessed``:
   ```shell
-  ln -s path_to_unzipped_Linemod_preprocessed pvn3d/dataset/linemod/
+  ln -s path_to_unzipped_Linemod_preprocessed pvn3d/datasets/linemod/
   ```
 - **YCB-Video:** Download the YCB-Video Dataset from [PoseCNN](https://rse-lab.cs.washington.edu/projects/posecnn/). Unzip it and link the unzipped```YCB_Video_Dataset``` to ```pvn3d/datasets/ycb/YCB_Video_Dataset```:
 
@@ -59,7 +68,7 @@ This is the source code for ***PVN3D: A Deep Point-wise 3D Keypoints Voting Netw
 - Train the model for the target object. Take object ape for example:
   ```shell
   cd pvn3d
-  python3 -m train.train_linemod_pvn3d --cls ape
+  python -m train.train_linemod_pvn3d --cls ape
   ```
   The trained checkpoints are stored in ``train_log/linemod/checkpoints/{cls}/``, ``train_log/linemod/checkpoints/ape/`` in this example.
 

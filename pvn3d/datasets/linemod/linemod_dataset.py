@@ -49,15 +49,20 @@ class LM_Dataset():
             rnd_img_pth = os.path.join(
                 self.root, "renders/{}/file_list.txt".format(cls_type)
             )
-            self.rnd_lst = self.bs_utils.read_lines(rnd_img_pth)
+            try:
+                self.rnd_lst = self.bs_utils.read_lines(rnd_img_pth)
+            except: # No synthetic rendered data.
+                print("Train without rendered data from https://github.com/ethnhe/raster_triangle")
+                self.rnd_lst = []
 
             fuse_img_pth = os.path.join(
                 self.root, "fuse/{}/file_list.txt".format(cls_type)
             )
             try:
                 self.fuse_lst = self.bs_utils.read_lines(fuse_img_pth)
-            except: # no fuse dataset
-                self.fuse_lst = self.rnd_lst
+            except: # No fuse dataset
+                print("Train without fuse data from https://github.com/ethnhe/raster_triangle")
+                self.fuse_lst = []
             self.all_lst = self.real_lst + self.rnd_lst + self.fuse_lst
         else:
             self.add_noise = False
@@ -77,13 +82,20 @@ class LM_Dataset():
         print("{}_dataset_size: ".format(dataset_name), len(self.all_lst))
 
     def real_syn_gen(self, real_ratio=0.3):
+        if len(self.fuse_lst) + len(self.rnd_lst) == 0:  # No synthetic data
+            real_ratio = 1.0
         if self.rng.rand() < real_ratio: # real
             n_imgs = len(self.real_lst)
             idx = self.rng.randint(0, n_imgs)
             pth = self.real_lst[idx]
             return pth
         else:
-            fuse_ratio = 0.4
+            if len(self.rnd_lst) == 0:  # No rendered data
+                fuse_ratio = 1.0
+            elif len(self.fuse_lst) == 0:  # No fuse data
+                fuse_ratio = 0.0
+            else:  # With rendered and fuse data
+                fuse_ratio = 0.4
             if self.rng.rand() < fuse_ratio:
                 idx = self.rng.randint(0, len(self.fuse_lst))
                 pth = self.fuse_lst[idx]

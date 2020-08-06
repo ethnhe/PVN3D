@@ -4,22 +4,55 @@ This is the source code for ***PVN3D: A Deep Point-wise 3D Keypoints Voting Netw
 <div align=center><img width="60%" height="60%" src="pictures/intro.gif"/></div>
 
 ## Installation
-- Install CUDA9.0
-- Set up python environment from requirement.txt:
+- Install the NVIDIA driver version 440
   ```shell
-  pip3 install -r requirement.txt 
+  sudo apt install nvidia-driver-440
+  # reboot
+  shutdown -r now
+  ```
+- Install CUDA10.2 from the [NIVIDA website](https://developer.nvidia.com/cuda-10.2-download-archive).
+  Remove other versions as explained in the [NVIDIA installation guide](https://docs.nvidia.com/cuda/archive/10.2/cuda-installation-guide-linux/index.html#handle-uninstallation).
+  For Ubuntu 18.04 the instruction for "deb (network)" work well:
+  ```shell
+  wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/cuda-ubuntu1804.pin
+  sudo mv cuda-ubuntu1804.pin /etc/apt/preferences.d/cuda-repository-pin-600
+  sudo apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/7fa2af80.pub
+  sudo add-apt-repository "deb http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/ /"
+  sudo apt-get update
+  sudo apt-get -y install cuda-10-2
+  ```
+- Create and activate a python3 virtual environment.
+  Install the requirements.
+  ```shell
+  python3 -m venv venv
+  source venv/bin/activate
+  # Cython an numpy must be installed before requirements.txt
+  pip3 install Cython numpy --user
+  pip3 install -r requirements.txt
   ```
 - Install tkinter through ``sudo apt install python3-tk``
-- Install [python-pcl](https://github.com/strawlab/python-pcl).
+- Install python-pcl. For Ubtuntu 18.04 from source:
+  ```shell
+  # install dependencies
+  sudo apt install libpcl-dev libvtk6-dev
+  # clone fork with fix for Ubuntu 18.04
+  git clone https://github.com/Tuebel/python-pcl
+  cd python-pcl
+  python3 setup.py install
+  ```
 - Install PointNet++ (refer from [Pointnet2_PyTorch](https://github.com/erikwijmans/Pointnet2_PyTorch)):
   ```shell
+  git clone https://github.com/erikwijmans/Pointnet2_PyTorch
+  cd Pointnet2_PyTorch
+  pip3 install -r requirements.txt
+  cd ..
   python3 setup.py build_ext
   ```
 
 ## Datasets
 - **LineMOD:** Download the preprocessed LineMOD dataset from [here](https://drive.google.com/drive/folders/19ivHpaKm9dOrr12fzC8IDFczWRPFxho7) (refer from [DenseFusion](https://github.com/j96w/DenseFusion)). Unzip it and link the unzipped ``Linemod_preprocessed/`` to ``pvn3d/datasets/linemod/Linemod_preprocessed``:
   ```shell
-  ln -s path_to_unzipped_Linemod_preprocessed pvn3d/dataset/linemod/
+  ln -s path_to_unzipped_Linemod_preprocessed pvn3d/datasets/linemod/
   ```
 - **YCB-Video:** Download the YCB-Video Dataset from [PoseCNN](https://rse-lab.cs.washington.edu/projects/posecnn/). Unzip it and link the unzipped```YCB_Video_Dataset``` to ```pvn3d/datasets/ycb/YCB_Video_Dataset```:
 

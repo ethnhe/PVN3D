@@ -22,7 +22,7 @@ from lib.utils.sync_batchnorm import convert_model
 from lib.utils.pvn3d_eval_utils import cal_frame_poses, cal_frame_poses_lm
 from lib.utils.basic_utils import Basic_Utils
 try:
-    from neupeak.utils.webcv2 import imshow, waitKey
+    from cv2 import imshow, waitKey
 except:
     from cv2 import imshow, waitKey
 

@@ -24,7 +24,7 @@ from datasets.linemod.linemod_dataset import LM_Dataset
 from lib.loss import OFLoss, FocalLoss
 from common import Config
 from lib.utils.sync_batchnorm import convert_model
-from lib.utils.warmup_scheduler import CyclicLR
+from torch.optim.lr_scheduler import CyclicLR
 from lib.utils.pvn3d_eval_utils import TorchEval
 import lib.utils.etw_pytorch_utils as pt_utils
 import resource
@@ -199,7 +199,7 @@ def model_fn_decorator(
             ).sum()
             w = [2.0, 1.0, 1.0]
             loss = loss_rgbd_seg * w[0] + loss_kp_of * w[1] + \
-                   loss_ctr_of * w[2]
+                loss_ctr_of * w[2]
 
             _, classes_rgbd = torch.max(pred_rgbd_seg, -1)
             acc_rgbd = (
@@ -315,7 +315,7 @@ class Trainer(object):
         train_loader,
         test_loader=None,
         best_loss=1e4,
-        log_epoch_f = None
+        log_epoch_f=None
     ):
         r"""
            Call to begin training the model
@@ -405,11 +405,11 @@ class Trainer(object):
                                 ),
                                 is_best,
                                 filename=self.checkpoint_name,
-                                bestname=self.best_name +'_%.4f'% val_loss,
+                                bestname=self.best_name + '_%.4f' % val_loss,
                                 bestname_pure=self.best_name,
                             )
                             info_p = self.checkpoint_name.replace(
-                                '.pth.tar','_epoch.txt'
+                                '.pth.tar', '_epoch.txt'
                             )
                             os.system(
                                 'echo {} {} >> {}'.format(
@@ -460,9 +460,8 @@ if __name__ == "__main__":
     ).cuda()
     model = convert_model(model)
     model.cuda()
-    optimizer = optim.Adam(
-        model.parameters(), lr=args.lr, weight_decay=args.weight_decay
-    )
+    optimizer = optim.Adam(model.parameters(), lr=args.lr,
+                           weight_decay=args.weight_decay)
 
     # default value
     it = -1  # for the initialize value of `LambdaLR` and `BNMomentumScheduler`
@@ -484,13 +483,12 @@ if __name__ == "__main__":
         model
     )
 
-    lr_scheduler = CyclicLR(
-        optimizer, base_lr=1e-5, max_lr=1e-3,
-        step_size=config.n_total_epoch * config.num_mini_batch_per_epoch // 6,
-        mode = 'triangular'
-    )
+    lr_scheduler = CyclicLR(optimizer, base_lr=1e-5, max_lr=1e-3, cycle_momentum=False,
+                            step_size_up=config.n_total_epoch * config.num_mini_batch_per_epoch // 6,
+                            step_size_down=config.n_total_epoch * config.num_mini_batch_per_epoch // 6,
+                            mode='triangular')
 
-    bnm_lmbd = lambda it: max(
+    def bnm_lmbd(it): return max(
         args.bn_momentum
         * args.bn_decay ** (int(it * config.mini_batch_size / args.decay_step)),
         bnm_clip,
@@ -517,11 +515,13 @@ if __name__ == "__main__":
         model,
         model_fn,
         optimizer,
-        checkpoint_name = os.path.join(checkpoint_fd, "{}_pvn3d".format(args.cls)),
-        best_name = os.path.join(checkpoint_fd, "{}_pvn3d_best".format(args.cls)),
-        lr_scheduler = lr_scheduler,
-        bnm_scheduler = bnm_scheduler,
-        viz = viz,
+        checkpoint_name=os.path.join(
+            checkpoint_fd, "{}_pvn3d".format(args.cls)),
+        best_name=os.path.join(
+            checkpoint_fd, "{}_pvn3d_best".format(args.cls)),
+        lr_scheduler=lr_scheduler,
+        bnm_scheduler=bnm_scheduler,
+        viz=viz,
     )
 
     if args.eval_net:

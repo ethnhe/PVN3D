@@ -4,6 +4,7 @@ This is the source code for ***PVN3D: A Deep Point-wise 3D Keypoints Voting Netw
 <div align=center><img width="60%" height="60%" src="pictures/intro.gif"/></div>
 
 ## Installation
+- The following setting is for pytorch 1.0.1. For pytorch 1.5 & cuda 10, switch to branch [pytorch-1.5](https://github.com/ethnhe/PVN3D/tree/pytorch-1.5).
 - Install CUDA9.0
 - Set up python environment from requirement.txt:
   ```shell

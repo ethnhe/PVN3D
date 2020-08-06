@@ -5,7 +5,3 @@
 ****/*.so
 build
 ****/knn
-.vscode
-venv
-Pointnet2_PyTorch
-python-pcl*

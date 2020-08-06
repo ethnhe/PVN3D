@@ -27,8 +27,8 @@ This is the source code for ***PVN3D: A Deep Point-wise 3D Keypoints Voting Netw
   python3 -m venv venv
   source venv/bin/activate
   # Cython an numpy must be installed before requirements.txt
-  pip install Cython numpy
-  pip install -r requirements.txt
+  pip3 install Cython numpy --user
+  pip3 install -r requirements.txt
   ```
 - Install tkinter through ``sudo apt install python3-tk``
 - Install python-pcl. For Ubtuntu 18.04 from source:
@@ -38,15 +38,15 @@ This is the source code for ***PVN3D: A Deep Point-wise 3D Keypoints Voting Netw
   # clone fork with fix for Ubuntu 18.04
   git clone https://github.com/Tuebel/python-pcl
   cd python-pcl
-  python setup.py install
+  python3 setup.py install
   ```
 - Install PointNet++ (refer from [Pointnet2_PyTorch](https://github.com/erikwijmans/Pointnet2_PyTorch)):
   ```shell
   git clone https://github.com/erikwijmans/Pointnet2_PyTorch
   cd Pointnet2_PyTorch
-  pip install -r requirements.txt
+  pip3 install -r requirements.txt
   cd ..
-  python setup.py build_ext
+  python3 setup.py build_ext
   ```
 
 ## Datasets
@@ -68,7 +68,7 @@ This is the source code for ***PVN3D: A Deep Point-wise 3D Keypoints Voting Netw
 - Train the model for the target object. Take object ape for example:
   ```shell
   cd pvn3d
-  python -m train.train_linemod_pvn3d --cls ape
+  python3 -m train.train_linemod_pvn3d --cls ape
   ```
   The trained checkpoints are stored in ``train_log/linemod/checkpoints/{cls}/``, ``train_log/linemod/checkpoints/ape/`` in this example.
 

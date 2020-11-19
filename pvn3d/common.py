@@ -135,6 +135,8 @@ class Config:
 
             self.val_nid_ptn = "/data/6D_Pose_Data/datasets/LINEMOD/pose_nori_lists/{}_real_val.nori.list"
 
+        # use kp from config
+        camera_kp = np.loadtxt("/home/ubuntu/workplace/PVN3D/pvn3d/datasets/ycb/YCB_Video_Dataset/data/0000/000001-CameraK.txt")
         self.intrinsic_matrix = {
             'linemod': np.array([[572.4114, 0.,         325.2611],
                                 [0.,        573.57043,  242.04899],
@@ -142,9 +144,10 @@ class Config:
             'blender': np.array([[700.,     0.,     320.],
                                  [0.,       700.,   240.],
                                  [0.,       0.,     1.]]),
-            'ycb_K1': np.array([[1066.778, 0.        , 312.9869],
-                                [0.      , 1067.487  , 241.3109],
-                                [0.      , 0.        , 1.0]], np.float32),
+            # 'ycb_K1': np.array([[1066.778, 0.        , 312.9869], # org
+            #                     [0.      , 1067.487  , 241.3109],
+            #                     [0.      , 0.        , 1.0]], np.float32),
+            'ycb_K1': camera_kp,
             'ycb_K2': np.array([[1077.836, 0.        , 323.7872],
                                 [0.      , 1078.189  , 279.6921],
                                 [0.      , 0.        , 1.0]], np.float32)

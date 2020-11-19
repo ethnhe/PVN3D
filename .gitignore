@@ -5,3 +5,6 @@
 ****/*.so
 build
 ****/knn
+pvn3d/datasets/ycb/YCB_Video_Dataset
+pvn3d/train_log/ycb/eval_results/pose_vis
+.vscode

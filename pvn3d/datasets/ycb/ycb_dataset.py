@@ -245,6 +245,8 @@ class YCB_Dataset():
             kp_targ_ofst = np.zeros((config.n_sample_points, config.n_keypoints, 3))
             ctr_targ_ofst = np.zeros((config.n_sample_points, 3))
             cls_id_lst = meta['cls_indexes'].flatten().astype(np.uint32)
+            cls_id_lst = [6, 17, 18] # '040_large_marker', the 18 th line in 'datasets/ycb/dataset_config/classes.txt'
+            # print("cls_id_lst:" + str(cls_id_lst))
             for i, cls_id in enumerate(cls_id_lst):
                 r = meta['poses'][:, :, i][:, 0:3]
                 t = np.array(meta['poses'][:, :, i][:, 3:4].flatten()[:, None])
@@ -277,6 +279,9 @@ class YCB_Dataset():
                 target_offset = np.array(target).transpose(1, 0, 2)  # [npts, nkps, c]
                 kp_targ_ofst[msk_idx, :, :] = target_offset[msk_idx, :, :]
 
+            # print("cls_id_lst:" + str(cls_id_lst))
+            # cls_ids[3, :] = np.array([40])
+            # print(cls_ids)
             # rgb, pcld, cld_rgb_nrm, choose, kp_targ_ofst, ctr_targ_ofst, cls_ids, RTs, labels, kp_3ds, ctr_3ds
             if DEBUG:
                 return  torch.from_numpy(rgb.astype(np.float32)), \

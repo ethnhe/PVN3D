@@ -541,6 +541,8 @@ class Basic_Utils():
     def get_kps(
         self, cls, kp_type='farthest', ds_type='ycb'
     ):
+        # print(self.ycb_cls_lst)
+        # print(self.ycb_cls_kps_dict)
         if type(cls) is int:
             if ds_type == 'ycb':
                 cls = self.ycb_cls_lst[cls - 1]

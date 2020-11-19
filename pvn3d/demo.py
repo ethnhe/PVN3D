@@ -119,15 +119,21 @@ def cal_view_pred_pose(model, data, epoch=0, obj_id=-1):
             )
             pred_cls_ids = np.array([[1]])
 
+        # print("pred_pose_lst" + str(pred_pose_lst))
+
         np_rgb = rgb.cpu().numpy().astype("uint8")[0].transpose(1, 2, 0).copy()
         if args.dataset == "ycb":
             np_rgb = np_rgb[:, :, ::-1].copy()
         ori_rgb = np_rgb.copy()
+        pose_to_write = None
         for cls_id in cls_ids[0].cpu().numpy():
             idx = np.where(pred_cls_ids == cls_id)[0]
             if len(idx) == 0:
                 continue
             pose = pred_pose_lst[idx[0]]
+            if pose_to_write is None:
+                pose_to_write = pose
+            print("pose" + str(pose))
             if args.dataset == "ycb":
                 obj_id = int(cls_id[0])
             mesh_pts = bs_utils.get_pointxyz(obj_id, ds_type=args.dataset).copy()
@@ -141,8 +147,17 @@ def cal_view_pred_pose(model, data, epoch=0, obj_id=-1):
             np_rgb = bs_utils.draw_p2ds(np_rgb, mesh_p2ds, color=color)
         vis_dir = os.path.join(config.log_eval_dir, "pose_vis")
         ensure_fd(vis_dir)
-        f_pth = os.path.join(vis_dir, "{}.jpg".format(epoch))
+        import datetime
+        curr_time = datetime.datetime.now()
+        append_str = str(curr_time.month) + str(curr_time.day) + str(curr_time.hour) + str(curr_time.minute) + str(curr_time.second)
+        f_pth = os.path.join(vis_dir,  "{}".format(epoch) + append_str + ".jpg")
         cv2.imwrite(f_pth, np_rgb)
+        pose_pth = os.path.join(vis_dir, "{}_pose.txt".format(epoch))
+        if pose_to_write is not None:
+            np.savetxt(pose_pth, pose_to_write)
+        print("\n\nPose results saved in: {}".format(pose_pth))
+        # pose_2 = np.loadtxt(pose_pth) 
+        # print(pose_2)
         # imshow("projected_pose_rgb", np_rgb)
         # imshow("ori_rgb", ori_rgb)
         # waitKey(1)
@@ -157,29 +172,31 @@ def main():
     else:
         test_ds = LM_Dataset('test', cls_type=args.cls)
         obj_id = config.lm_obj_dict[args.cls]
+        
     test_loader = torch.utils.data.DataLoader(
         test_ds, batch_size=config.test_mini_batch_size, shuffle=False,
-        num_workers=20
+        num_workers=1
     )
+    torch.cuda.empty_cache()
+    with torch.no_grad():
+        model = PVN3D(
+            num_classes=config.n_objects, pcld_input_channels=6, pcld_use_xyz=True,
+            num_points=config.n_sample_points
+        ).cuda()
+        model = convert_model(model)
+        model.cuda()
 
-    model = PVN3D(
-        num_classes=config.n_objects, pcld_input_channels=6, pcld_use_xyz=True,
-        num_points=config.n_sample_points
-    ).cuda()
-    model = convert_model(model)
-    model.cuda()
+        # load status from checkpoint
+        if args.checkpoint is not None:
+            checkpoint_status = load_checkpoint(
+                model, None, filename=args.checkpoint
+            )
+        model = nn.DataParallel(model)
 
-    # load status from checkpoint
-    if args.checkpoint is not None:
-        checkpoint_status = load_checkpoint(
-            model, None, filename=args.checkpoint[:-8]
-        )
-    model = nn.DataParallel(model)
-
-    for i, data in tqdm.tqdm(
-        enumerate(test_loader), leave=False, desc="val"
-    ):
-        cal_view_pred_pose(model, data, epoch=i, obj_id=obj_id)
+        for i, data in tqdm.tqdm(
+            enumerate(test_loader), leave=False, desc="val"
+        ):
+            cal_view_pred_pose(model, data, epoch=i, obj_id=obj_id)
 
 
 if __name__ == "__main__":

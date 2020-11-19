@@ -2,7 +2,7 @@ h5py
 numpy
 torch==1.0.1.post2
 torchvision==0.2.0
-yaml
+PyYAML
 pprint
 enum34
 future
@@ -17,3 +17,4 @@ cffi==1.11.5
 easydict==1.7
 plyfile==0.6
 glumpy==1.0.6
+sklearn

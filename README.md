@@ -1,7 +1,10 @@
 # PVN3D
-This is the source code for ***PVN3D: A Deep Point-wise 3D Keypoints Voting Network for 6DoF Pose Estimation***, **CVPR 2020**. ([PDF](http://openaccess.thecvf.com/content_CVPR_2020/papers/He_PVN3D_A_Deep_Point-Wise_3D_Keypoints_Voting_Network_for_6DoF_CVPR_2020_paper.pdf), [Video_bilibili](https://www.bilibili.com/video/av89408773/), [Video_youtube](https://www.youtube.com/watch?v=ZKo788cyD-Q&t=1s)).
+This is the official source code for ***PVN3D: A Deep Point-wise 3D Keypoints Voting Network for 6DoF Pose Estimation***, **CVPR 2020**. ([PDF](http://openaccess.thecvf.com/content_CVPR_2020/papers/He_PVN3D_A_Deep_Point-Wise_3D_Keypoints_Voting_Network_for_6DoF_CVPR_2020_paper.pdf), [Video_bilibili](https://www.bilibili.com/video/av89408773/), [Video_youtube](https://www.youtube.com/watch?v=ZKo788cyD-Q&t=1s)).
 
 <div align=center><img width="60%" height="60%" src="pictures/intro.gif"/></div>
+
+## News
+We optimized and applied PVN3D for a robotic manipulation contest [OCRTOC (IROS 2020: Open Cloud Robot Table Organization Challenge)](http://www.ocrtoc.org/) and got 2nd place!
 
 ## Installation
 - The following setting is for pytorch 1.0.1. For pytorch 1.5 & cuda 10, switch to branch [pytorch-1.5](https://github.com/ethnhe/PVN3D/tree/pytorch-1.5).
@@ -101,6 +104,23 @@ This is the source code for ***PVN3D: A Deep Point-wise 3D Keypoints Voting Netw
   ![vis_ycb](pictures/ycb_qualitive.png)
 - Joint training for distinguishing objects with similar appearance but different in size:
   ![seg](pictures/seg_res.png)
+
+## Adaptation to New Dataset
+- Compile the FPS scripts (refer from [clean-pvnet](https://github.com/zju3dv/clean-pvnet)):
+```
+  cd lib/utils/dataset_tools/fps/
+  python3 setup.py build_ext --inplace
+```
+- Generate information of objects, eg. radius, 3D keypoints, etc. in your datasets with the ``gen_obj_info.py`` script:
+```
+  cd ../
+  python3 gen_obj_info.py --help
+```
+- Modify info of your new dataset in ```PVN3D/pvn3d/common.py``` 
+- Write your dataset preprocess script following ```PVN3D/pvn3d/datasets/ycb/ycb_dataset.py``` (for multi objects of a scene) or ```PVN3D/pvn3d/datasets/linemod/linemod_dataset.py``` (for single object of a scene). Note that you should modify or call the function that get your model info, such as 3D keypoints, center points, and radius properly.
+- (*Important!*) Visualize and check if you process the data properly, eg, the projected keypoint and center point, the semantic label of each point, etc.
+- For inference, make sure that you load the 3D keypoints, center point, and radius of your objects in the object coordinate system properly in ```PVN3D/pvn3d/lib/utils/pvn3d_eval_utils.py```.
+
 
 ## Citations
 Please cite [PVN3D](https://arxiv.org/abs/1911.04231) if you use this repository in your publications:

@@ -4,7 +4,7 @@ This is the official source code for ***PVN3D: A Deep Point-wise 3D Keypoints Vo
 <div align=center><img width="60%" height="60%" src="pictures/intro.gif"/></div>
 
 ## News
-We optimized and applied PVN3D for a robotic manipulation contest [OCRTOC (IROS 2020: Open Cloud Robot Table Organization Challenge)](http://www.ocrtoc.org/) and got 2nd place!
+We optimized and applied PVN3D for a robotic manipulation contest [OCRTOC (IROS 2020: Open Cloud Robot Table Organization Challenge)](http://www.ocrtoc.org/) and got 2nd place! The model was trained on synthesis data generated from rendering engine and only a few frames (about 100 frames) of real data but generalize to real scenes during inference, revealing its capability of cross-domain generalization.
 
 ## Installation
 - The following setting is for pytorch 1.0.1. For pytorch 1.5 & cuda 10, switch to branch [pytorch-1.5](https://github.com/ethnhe/PVN3D/tree/pytorch-1.5).

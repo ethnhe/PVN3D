@@ -336,7 +336,8 @@ class LM_Dataset():
                     torch.LongTensor(labels.astype(np.int32)), \
                     torch.from_numpy(kp3ds.astype(np.float32)), \
                     torch.from_numpy(ctr3ds.astype(np.float32)),
-        except:
+        except Exception as ex:
+            print(ex)
             return None
 
     def __len__(self):

@@ -4,7 +4,7 @@ This is the official source code for ***PVN3D: A Deep Point-wise 3D Keypoints Vo
 <div align=center><img width="60%" height="60%" src="pictures/intro.gif"/></div>
 
 ## News
-We optimized and applied PVN3D for a robotic manipulation contest [OCRTOC (IROS 2020: Open Cloud Robot Table Organization Challenge)](http://www.ocrtoc.org/) and got 2nd place! The model was trained on synthesis data generated from rendering engine and only a few frames (about 100 frames) of real data but generalize to real scenes during inference, revealing its capability of cross-domain generalization.
+We optimized and applied PVN3D to a robotic manipulation contest [OCRTOC (IROS 2020: Open Cloud Robot Table Organization Challenge)](http://www.ocrtoc.org/) and got 2nd place! The model was trained on synthesis data generated from rendering engine and only a few frames (about 100 frames) of real data but generalize to real scenes during inference, revealing its capability of cross-domain generalization.
 
 ## Installation
 - The following setting is for pytorch 1.0.1. For pytorch 1.5 & cuda 10, switch to branch [pytorch-1.5](https://github.com/ethnhe/PVN3D/tree/pytorch-1.5).
@@ -86,7 +86,7 @@ We optimized and applied PVN3D for a robotic manipulation contest [OCRTOC (IROS 
   You can evaluate different checkpoint by revising the ``tst_mdl`` to the path of your target model.
 - We provide our pre-trained models at [onedrive link](https://hkustconnect-my.sharepoint.com/:f:/g/personal/yhebk_connect_ust_hk/EmQQXKJdC1FDplKS4FQ6n78B4T7eyvhSEsZ8dZySJUmv4w?e=7BwsS5), [baiduyun link](https://pan.baidu.com/s/1hCzqfB3JhOzF3LATsWFFBg) (access code(提取码): h2i5). Download the ycb pre-trained model, move it to ``train_log/ycb/checkpoints/`` and modify ``tst_mdl`` for testing.
 
-### Demo/visualizaion on the LineMOD Dataset
+### Demo/visualizaion on the YCB-Video Dataset
 - After training your model or downloading the pre-trained model, you can start the demo by:
   ```shell
   # commands in demo_ycb.sh

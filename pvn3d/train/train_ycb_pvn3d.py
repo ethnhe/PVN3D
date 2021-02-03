@@ -132,21 +132,18 @@ def save_checkpoint(
 def load_checkpoint(model=None, optimizer=None, filename="checkpoint"):
     filename = "{}.pth.tar".format(filename)
 
-    if os.path.isfile(filename):
-        print("==> Loading from checkpoint '{}'".format(filename))
-        checkpoint = torch.load(filename)
-        epoch = checkpoint["epoch"]
-        it = checkpoint.get("it", 0.0)
-        best_prec = checkpoint["best_prec"]
-        if model is not None and checkpoint["model_state"] is not None:
-            model.load_state_dict(checkpoint["model_state"])
-        if optimizer is not None and checkpoint["optimizer_state"] is not None:
-            optimizer.load_state_dict(checkpoint["optimizer_state"])
-        print("==> Done")
-        return it, epoch, best_prec
-    else:
-        print("==> Checkpoint '{}' not found".format(filename))
-        return None
+    assert os.path.isfile(filename), "==> Checkpoint '{}' not found".format(filename)
+    print("==> Loading from checkpoint '{}'".format(filename))
+    checkpoint = torch.load(filename)
+    epoch = checkpoint["epoch"]
+    it = checkpoint.get("it", 0.0)
+    best_prec = checkpoint["best_prec"]
+    if model is not None and checkpoint["model_state"] is not None:
+        model.load_state_dict(checkpoint["model_state"])
+    if optimizer is not None and checkpoint["optimizer_state"] is not None:
+        optimizer.load_state_dict(checkpoint["optimizer_state"])
+    print("==> Done")
+    return it, epoch, best_prec
 
 
 def model_fn_decorator(

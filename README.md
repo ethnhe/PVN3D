@@ -118,7 +118,8 @@ We optimized and applied PVN3D to a robotic manipulation contest [OCRTOC (IROS 2
 ```
 - Modify info of your new dataset in ```PVN3D/pvn3d/common.py``` 
 - Write your dataset preprocess script following ```PVN3D/pvn3d/datasets/ycb/ycb_dataset.py``` (for multi objects of a scene) or ```PVN3D/pvn3d/datasets/linemod/linemod_dataset.py``` (for single object of a scene). Note that you should modify or call the function that get your model info, such as 3D keypoints, center points, and radius properly.
-- (*Important!*) Visualize and check if you process the data properly, eg, the projected keypoint and center point, the semantic label of each point, etc.
+- (*Important!*) Visualize and check if you process the data properly, eg, the projected keypoints and center point, the semantic label of each point, etc. For example, you can visualize the projected center point (blue point) and selected keypoints (red points) as follow by running ```python3 -m datasets.linemod.linemod_dataset```.
+  ![vis_lm_data](pictures/lm_vis_data.png)
 - For inference, make sure that you load the 3D keypoints, center point, and radius of your objects in the object coordinate system properly in ```PVN3D/pvn3d/lib/utils/pvn3d_eval_utils.py```.
 
 

@@ -25,7 +25,7 @@ from datasets.ycb.ycb_dataset import YCB_Dataset
 from lib.loss import OFLoss, FocalLoss
 from common import Config
 from lib.utils.sync_batchnorm import convert_model
-from lib.utils.warmup_scheduler import CyclicLR
+from torch.optim.lr_scheduler import CyclicLR
 from lib.utils.pvn3d_eval_utils import TorchEval
 import lib.utils.etw_pytorch_utils as pt_utils
 import resource
@@ -472,9 +472,10 @@ if __name__ == "__main__":
     )
 
     lr_scheduler = CyclicLR(
-        optimizer, base_lr=1e-5, max_lr=1e-3,
-        step_size=config.n_total_epoch * config.num_mini_batch_per_epoch // 6,
-        mode = 'triangular'
+        optimizer, base_lr=1e-5, max_lr=1e-3, cycle_momentum=False,
+        step_size_up=config.n_total_epoch * config.num_mini_batch_per_epoch // 6,
+        step_size_down=config.n_total_epoch * config.num_mini_batch_per_epoch // 6,
+        mode='triangular'
     )
 
     bnm_lmbd = lambda it: max(

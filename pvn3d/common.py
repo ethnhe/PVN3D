@@ -115,7 +115,6 @@ class Config:
             self.lm_kps_dir = os.path.abspath(
                 os.path.join(self.exp_dir, 'datasets/linemod/lm_obj_kps/')
             )
-            self.lm_sym_cls_ids = [7, 8]
             self.val_test_pkl_p = os.path.join(
                 self.exp_dir, 'datasets/linemod/test_val_data.pkl',
             )

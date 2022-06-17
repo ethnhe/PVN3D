@@ -12,7 +12,7 @@ This is the official source code for ***PVN3D: A Deep Point-wise 3D Keypoints Vo
 - Install CUDA9.0
 - Set up python environment from requirement.txt:
   ```shell
-  pip3 install -r requirement.txt 
+  pip3 install -r requirements.txt 
   ```
 - Install tkinter through ``sudo apt install python3-tk``
 - Install [python-pcl](https://github.com/strawlab/python-pcl).
